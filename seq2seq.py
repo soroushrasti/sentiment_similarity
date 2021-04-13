@@ -8,7 +8,7 @@ from time import time
 data = pd.read_csv('data.csv', encoding='iso-8859-1')
 
 
-# 
+
 #  The data has two columns, "headlines" and "text".
 #  The goal is to use seq2seq model to summarize the text further in a way that has the same length as the headline. 
 # This summarization helps the matching model a lot in order to find the best sentiments matching of the text with targeted headline
@@ -107,7 +107,6 @@ graph_df['headline']=headline_count
 
 
 # the length of the text is between 40 and 70 words
-
 import matplotlib.pyplot as plt
 graph_df['text'].hist()
 plt.show()
@@ -138,7 +137,6 @@ print(cnt/len(data['cleaned_text']))
 
 
 # We just understood that most of the text has length between 8-15 words for headline and 40-100 words for text, therefore, for the model we can set the maximim length of each to the following
-
 max_text_len=62
 max_headline_len=14
 
@@ -177,9 +175,7 @@ from keras.preprocessing.sequence import pad_sequences
 #prepare a tokenizer on training data
 x_tokenizer = Tokenizer() 
 x_tokenizer.fit_on_texts(list(x_train))
-
 x_voc_all   =  len(x_tokenizer.word_counts) + 1
-
 print("Number of all words in x_train = {}".format(x_voc_all))
 
 
@@ -200,7 +196,6 @@ print("percent of rare words in x:",(rare_words/all_words)*100)
 
 
 # As see from before over 50 percent of data are rare words, let's limit the data to only the common words in order to speed up the calculation
-
 x_tokenizer = Tokenizer(num_words=all_words-rare_words) 
 x_tokenizer.fit_on_texts(list(x_train))
 
@@ -218,7 +213,6 @@ x_validation   =   pad_sequences(x_validation_seq, maxlen=max_text_len, padding=
 
 #size of common vocabulary ( +1 for padding token)
 x_voc   =  x_tokenizer.num_words + 1
-
 print("Number of common words in x_train = {}".format(x_voc))
 
 
@@ -232,11 +226,9 @@ print("Number of all words in y_train = {}".format(y_voc_all))
 
 
 # the same as before but for Y
-
 # the number of words is very huge, here I should focus on the 
 # common words because the rare words does not improve the performace and just
 # make the calculation heavier
-
 # number of times a word repeated to count as common word
 repeat=3
 
@@ -298,9 +290,8 @@ y_validation=np.delete(y_validation,ind, axis=0)
 x_validation=np.delete(x_validation,ind, axis=0)
 
 
-# ### Until now, we perpared and processed the data for feeding to the model, from here, the modeling part starts
+# Until now, we perpared and processed the data for feeding to the model, from here, the modeling part starts
 # here in each step, the encode, embeding layer, encoders and dense layers are defined based on the size of healines and text as discussed before
-
 from keras import backend 
 import gensim
 from numpy import *
@@ -369,16 +360,10 @@ model.compile(optimizer='rmsprop', loss='sparse_categorical_crossentropy')
 earlystoping = EarlyStopping(monitor='val_loss', mode='min', verbose=1,patience=2)
 
 # here the model is fitted to the train data with early stoping condition on the loss of validation set.
-
-
-
 output=model.fit([x_train,y_train[:,:-1]], y_train.reshape(y_train.shape[0],y_train.shape[1], 1)[:,1:] ,epochs=100,callbacks=[earlystoping],batch_size=50, validation_data=([x_validation,y_validation[:,:-1]], y_validation.reshape(y_validation.shape[0],y_validation.shape[1], 1)[:,1:]))
 
 
 # let's visualizethe the performace of the model for both validation and training
-
-
-
 from matplotlib import pyplot
 pyplot.plot(output.history['loss'], label='training')
 pyplot.plot(output.history['val_loss'], label='validation')
@@ -470,8 +455,6 @@ def seq2text(input_seq):
 
 # Now it is time to take one step further and define a new dataframe that has an additional column named "predicted_headline" which has the same length as the "original headline" column. 
 # "predicted_headline" column helps the matching model significantly to find and rank the news article headline 
-
-
 df=pd.DataFrame(columns=["original_headline","text","predicted_headline"])
 for i in range(0,x_train.shape[0]):
   df.loc[i,"text"]=seq2text(x_train[i])
@@ -486,8 +469,6 @@ df.head(1)
 # In this step, we just want to find the semantic similarity between the predcited_headline and the original headlines 
 # and rank them according to their relevance.
 #I used the fuzzywuzzy library and rank the relevance of the headline according to the Levenshtein Distance
-
-
 k=3
 # for string matching I used fuzzywuzzy library
 from fuzzywuzzy import fuzz
@@ -500,7 +481,6 @@ def ranking(predicted_headline):
 
 # here, based on the ranking function, the k best matching headlines 
 # are stored in the database
-
 for i, predicted_headline in enumerate(df["predicted_headline"]):
     for rank, rank_index in enumerate(ranking(predicted_headline)):
         df.loc[i,"matching rank of "+ str(rank+1) ]= df.loc[rank_index,"original_headline"]
